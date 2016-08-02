@@ -1,4 +1,4 @@
-sampledboosting <- function(datafile){
+sampledboosting <- function(datafile, sampleRatio = 0.1){
 
 library(mboost)
 library(caret)
@@ -22,7 +22,7 @@ if (length(commandArgs(trailingOnly = TRUE))>0) {
   ###### local testing
   nOuterFolds <- 10 #number of folds
   redSteps <- 100 #number of steps to run for the reduction in voxels
-  sampleRatio = 0.4 #ratio of voxels to REMOVE
+  sampleRatio = sampleRatio #ratio of voxels to REMOVE
   fixedMstop <- 2000
   fixedNu <- 0.1
   dataFile <- datafile
