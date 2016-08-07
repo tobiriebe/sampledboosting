@@ -91,7 +91,7 @@ data <- function(simulations,
 
 
 #Add the problem
-addProblem(reg, id = "mytest", dynamic = data, seed = 123)
+addProblem(reg, name = "mytest", dynamic = data, seed = 123)
 
 ################################################################################
 ####################################TREE########################################
