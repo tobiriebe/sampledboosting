@@ -11,7 +11,7 @@ library(pROC)
 #name ID an file direction
 reg = makeExperimentRegistry(file.dir = "registry")
 
-data <- function(jobs,
+fun <- function(jobs,
                  data,
                  simulations,
                  samples=200,
@@ -93,7 +93,7 @@ data <- function(jobs,
 
 
 #Add the problem
-addProblem(reg = reg, name = "mytest", fun = data, seed = 123)
+addProblem("mytest", reg = reg, fun = fun)
 
 ################################################################################
 ####################################TREE########################################
