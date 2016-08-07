@@ -9,7 +9,7 @@ library(caret)
 library(pROC)
 
 #name ID an file direction
-reg = makeExperimentRegistry(file.dir = "mytest")
+reg = makeRegistry(file.dir = "mytest")
 
 data <- function(simulations,
                  samples=200,
