@@ -91,13 +91,13 @@ data <- function(simulations,
 
 
 #Add the problem
-addProblem(reg, id = "mytest", fun = data(), seed = 123)
+addProblem(reg, id = "mytest", dynamic = data, seed = 123)
 
 ################################################################################
 ####################################TREE########################################
 ################################################################################
 
-sampledboosting.wrapper <- function(fun, sampleRatio ){
+sampledboosting.wrapper <- function(dynamic, sampleRatio ){
   
   
   
@@ -113,7 +113,7 @@ sampledboosting.wrapper <- function(fun, sampleRatio ){
     sampleRatio <- as.numeric(args[3])  #ratio of voxels TO REMOVE
     fixedMstop <- as.numeric(args[4])   #mstop to be used when not implementing cv early stopping
     fixedNu <- args[5]                  #shrinkage coefficient for boosting
-    fun <- args[6]                 #fun to load
+    dynamic <- args[6]                 #dynamic to load
     localRun <- FALSE
   } else {
     ###### local testing
@@ -122,7 +122,7 @@ sampledboosting.wrapper <- function(fun, sampleRatio ){
     sampleRatio = sampleRatio #ratio of voxels to REMOVE
     fixedMstop <- 100
     fixedNu <- 0.1
-    fun <- fun
+    dynamic <- dynamic
     localRun <- TRUE
   }
   
@@ -136,21 +136,21 @@ sampledboosting.wrapper <- function(fun, sampleRatio ){
   
   #############load the data file with data and parameters#############
   #score <- read.table("CYP2D6ScoreTRAINING.txt")
-  #load(fun)
-  #if (grepl(pattern = "_Plain", x = fun)){
+  #load(dynamic)
+  #if (grepl(pattern = "_Plain", x = dynamic)){
   # fileType <- fileTypePlain
   #} else {
   # fileType <- fileTypeVols
   #}
-  n <- fun$samples  #number of cases (samples)
-  # simulations is already called 'simulations' in the fun
-  nVariables <- fun$predictors 
-  dataX <- fun$X # X[simulation, sample, x]
-  dataXnoise <- fun$Xnoise # Xnoise[simulation, sample, x]
+  n <- dynamic$samples  #number of cases (samples)
+  # simulations is already called 'simulations' in the dynamic
+  nVariables <- dynamic$predictors 
+  dataX <- dynamic$X # X[simulation, sample, x]
+  dataXnoise <- dynamic$Xnoise # Xnoise[simulation, sample, x]
   #make a copy of the matrix, to keep for the final test (untouched predictors)
-  originalX <- fun$X
-  originalXnoise <- fun$Xnoise
-  simulations <- fun$simulations
+  originalX <- dynamic$X
+  originalXnoise <- dynamic$Xnoise
+  simulations <- dynamic$simulations
   #### other variables that get loaded:
   #response variables:
   # Y
@@ -200,11 +200,11 @@ sampledboosting.wrapper <- function(fun, sampleRatio ){
     X <- as.matrix(dataX[simulation, , ])
     Xnoise <- as.matrix(dataXnoise[simulation, , ])
     #training is always performed on noisy response variables
-    y <- fun$Ynoise[, simulation]
-    yClass <- fun$yBinNoise[, simulation]
+    y <- dynamic$Ynoise[, simulation]
+    yClass <- dynamic$yBinNoise[, simulation]
     
     #create Outer folds (list of indices, one list per fold, which specify the test sets)
-    indexOuterList <- createFolds(fun$Ynoise[, simulation], nOuterFolds) #sample(n)  
+    indexOuterList <- createFolds(dynamic$Ynoise[, simulation], nOuterFolds) #sample(n)  
     
     #   #iteration to (progressively) eliminate selected voxels to produce images
     #   for (reduction in 1:redSteps){
@@ -362,11 +362,11 @@ sampledboosting.wrapper <- function(fun, sampleRatio ){
   
   
   #make a name for the output file, using input file name and parameters passed
-  #outLabel <- paste(fun,"_OUT_", nOuterFolds, "_", redSteps, "_", sampleRatio, "_", fixedMstop, "_", fixedNu, ".rda", sep = "")
+  #outLabel <- paste(dynamic,"_OUT_", nOuterFolds, "_", redSteps, "_", sampleRatio, "_", fixedMstop, "_", fixedNu, ".rda", sep = "")
   #save all variables from input file, parameters and output
-  list(y = y, Ynoise = fun$Ynoise, yBin = fun$yBin,yBinNoise = fun$yBinNoise, 
-       originalX = originalX, originalXnoise = originalXnoise, coeffs = fun$coeffs, 
-       predictors = fun$predictors, kappa = fun$kappa, samples = fun$samples, 
+  list(y = y, Ynoise = dynamic$Ynoise, yBin = dynamic$yBin,yBinNoise = dynamic$yBinNoise, 
+       originalX = originalX, originalXnoise = originalXnoise, coeffs = dynamic$coeffs, 
+       predictors = dynamic$predictors, kappa = dynamic$kappa, samples = dynamic$samples, 
        simulations = simulations, nOuterFolds = nOuterFolds, redSteps = redSteps, 
        sampleRatio = sampleRatio, fixedMstop = fixedMstop, fixedNu = fixedNu,
        offsetFinal = offsetFinal, predModelList = predModelList, offsetFinalClass = offsetFinalClass,
@@ -377,7 +377,7 @@ sampledboosting.wrapper <- function(fun, sampleRatio ){
        predictionVectorClassNoise = predictionVectorClassNoise)
   
   
-} #end function
+} #end dynamicction
 
 addAlgorithm(reg, id = "sampledboosting", fun = sampledboosting.wrapper())
 
@@ -406,7 +406,7 @@ addAlgorithm(reg, id = "sampledboosting", fun = sampledboosting.wrapper())
 #pars = list(sampleRatio = c(0.1, 0.5, 0.9))
 #sampledboosting.design = makeDesign("sampledboosting", exhaustive = pars)
 
-batchMap(sampleboosting.wrapper, fun = c(2), sampleRatio = c(0.1))
+batchMap(sampleboosting.wrapper, dynamic = c(2), sampleRatio = c(0.1))
 
 
 
