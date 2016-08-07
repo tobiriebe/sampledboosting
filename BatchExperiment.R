@@ -379,7 +379,7 @@ sampledboosting.wrapper <- function(dynamic, sampleRatio ){
   
 } #end dynamicction
 
-addAlgorithm(reg, name = "sampledboosting", fun = sampledboosting.wrapper)
+addAlgorithm(reg, id = "sampledboosting", fun = sampledboosting.wrapper)
 
 
 
