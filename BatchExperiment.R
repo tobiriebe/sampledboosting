@@ -427,20 +427,4 @@ summarizeExperiments(reg)
 submitJobs(reg)
 
 
-# Calculate the misclassification rate for all (already done) jobs.
-reduce = function(job, res) {
-  n = length(residuals)
-  list(mcr = abs((sum(res)/n)))
-}
-res = reduceResultsExperiments(reg, fun = reduce)
-print(res)
-
-
-
-
-
-library(plyr)
-vars = setdiff(names(res), c("repl", "mcr"))
-aggr = ddply(res, vars, summarise, mean.mcr = mean(mcr))
-print(aggr)
 
