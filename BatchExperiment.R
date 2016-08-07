@@ -406,7 +406,7 @@ addAlgorithm(reg, id = "sampledboosting", fun = sampledboosting.wrapper)
 #pars = list(sampleRatio = c(0.1, 0.5, 0.9))
 #sampledboosting.design = makeDesign("sampledboosting", exhaustive = pars)
 
-batchMap(sampleboosting.wrapper)
+batchMap(sampledboosting.wrapper)
 
 
 
