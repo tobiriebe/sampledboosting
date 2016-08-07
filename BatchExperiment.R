@@ -9,7 +9,7 @@ library(caret)
 library(pROC)
 
 #name ID an file direction
-reg = makeRegistry(id = "mytest")
+reg = makeExperimentRegistry(file.dir = "registry")
 
 data <- function(simulations,
                  samples=200,
@@ -91,7 +91,7 @@ data <- function(simulations,
 
 
 #Add the problem
-addProblem(reg, name = "mytest", dynamic = data, seed = 123)
+#addProblem(reg, name = "mytest", dynamic = data, seed = 123)
 
 ################################################################################
 ####################################TREE########################################
@@ -379,7 +379,7 @@ sampledboosting.wrapper <- function(dynamic, sampleRatio ){
   
 } #end dynamicction
 
-addAlgorithm(reg, id = "sampledboosting", fun = sampledboosting.wrapper)
+#addAlgorithm(reg, id = "sampledboosting", fun = sampledboosting.wrapper)
 
 
 
@@ -406,7 +406,7 @@ addAlgorithm(reg, id = "sampledboosting", fun = sampledboosting.wrapper)
 #pars = list(sampleRatio = c(0.1, 0.5, 0.9))
 #sampledboosting.design = makeDesign("sampledboosting", exhaustive = pars)
 
-batchMap(sampledboosting.wrapper)
+batchMap(sampledboosting.wrapper, sampleRatio = c(0.1, 0.5), more.args = list(data(2)), reg = reg)
 
 
 
