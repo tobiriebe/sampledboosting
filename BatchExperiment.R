@@ -9,7 +9,7 @@ library(caret)
 library(pROC)
 
 #name ID an file direction
-reg = makeExperimentRegistry(id = "mytest")
+reg = ExperimentRegistry(file.dir = "mytest")
  
 data <- function(simulations,
                 samples=200,
@@ -91,7 +91,7 @@ data <- function(simulations,
   
   
 #Add the problem
-addProblem(reg, id = "mytest", dynamic = data, seed = 123, overwrite = TRUE)
+addProblem(reg, id = "mytest", fun = data, seed = 123)
 
 ################################################################################
 ####################################TREE########################################
@@ -379,7 +379,7 @@ sampledboosting.wrapper <- function(dynamic, sampleRatio ){
   
 } #end function
 
-addAlgorithm(reg, id = "sampledboosting", fun = sampledboosting.wrapper, overwrite = TRUE)
+addAlgorithm(reg, id = "sampledboosting", fun = sampledboosting.wrapper)
 
 
 
@@ -399,13 +399,14 @@ addAlgorithm(reg, id = "sampledboosting", fun = sampledboosting.wrapper, overwri
 
 
 # Define problem parameters:
-pars = list(simulations = c(2, 4), predictors = c(100, 1000))
-mytest.design = makeDesign("mytest", exhaustive = pars)
+#pars = list(simulations = c(2, 4), predictors = c(100, 1000))
+#mytest.design = makeDesign("mytest", exhaustive = pars)
 
 # Define sampledboosting parameters:
-pars = list(sampleRatio = c(0.1, 0.5, 0.9))
-sampledboosting.design = makeDesign("sampledboosting", exhaustive = pars)
+#pars = list(sampleRatio = c(0.1, 0.5, 0.9))
+#sampledboosting.design = makeDesign("sampledboosting", exhaustive = pars)
 
+batchMap(sampleboosting.wrapper, dynamic = c(2), sampleRatio = c(0.1))
 
 
 
@@ -413,15 +414,15 @@ sampledboosting.design = makeDesign("sampledboosting", exhaustive = pars)
 
 # Add experiments to the registry:
 # Use  previously defined experimental designs.
-addExperiments(reg, prob.designs = mytest.design,
-               algo.designs = sampledboosting.design,
-               repls = 2) # usually you would set repls to 100 or more.
+#addExperiments(reg, prob.designs = mytest.design,
+ #              algo.designs = sampledboosting.design,
+  #             repls = 2) # usually you would set repls to 100 or more.
 
 
 
 
 # Optional: Short summary over problems and algorithms.
-summarizeExperiments(reg)
+getJobTable(reg)
 
 # Submit the jobs to the batch system
 submitJobs(reg)
