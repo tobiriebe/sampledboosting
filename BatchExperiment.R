@@ -11,7 +11,9 @@ library(pROC)
 #name ID an file direction
 reg = makeExperimentRegistry(file.dir = "registry")
 
-data <- function(simulations,
+data <- function(jobs,
+                 data,
+                 simulations,
                  samples=200,
                  predictors=1000,
                  infoVars=50,
@@ -91,7 +93,7 @@ data <- function(simulations,
 
 
 #Add the problem
-#addProblem(reg, name = "mytest", dynamic = data, seed = 123)
+addProblem(reg = reg, name = "mytest", fun = data, seed = 123)
 
 ################################################################################
 ####################################TREE########################################
@@ -379,7 +381,7 @@ sampledboosting.wrapper <- function(dynamic, sampleRatio ){
   
 } #end dynamicction
 
-#addAlgorithm(reg, id = "sampledboosting", fun = sampledboosting.wrapper)
+addAlgorithm("sampledboosting", fun = sampledboosting.wrapper, reg = reg)
 
 
 
@@ -399,14 +401,14 @@ sampledboosting.wrapper <- function(dynamic, sampleRatio ){
 
 
 # Define problem parameters:
-#pars = list(simulations = c(2, 4), predictors = c(100, 1000))
+prob.design = list(simulations = c(2, 4), predictors = c(100, 1000))
 #mytest.design = makeDesign("mytest", exhaustive = pars)
 
 # Define sampledboosting parameters:
-#pars = list(sampleRatio = c(0.1, 0.5, 0.9))
+algo.design = list(sampleRatio = c(0.1, 0.5, 0.9))
 #sampledboosting.design = makeDesign("sampledboosting", exhaustive = pars)
-
-batchMap(sampledboosting.wrapper, sampleRatio = c(0.1, 0.5), more.args = list(data(2)), reg = reg)
+addExperiments(prob.design, algo.design, reg = reg)
+#batchMap(sampledboosting.wrapper, sampleRatio = c(0.1, 0.5), more.args = list(data(2)), reg = reg)
 
 
 
@@ -420,11 +422,11 @@ batchMap(sampledboosting.wrapper, sampleRatio = c(0.1, 0.5), more.args = list(da
 
 
 
-
+summarizeExperiments(reg = reg)
 # Optional: Short summary over problems and algorithms.
-getJobTable(reg)
+#getJobTable(reg)
 
 # Submit the jobs to the batch system
-submitJobs(reg)
+#submitJobs(reg)
 
 
