@@ -379,7 +379,7 @@ sampledboosting.wrapper <- function(dynamic, sampleRatio ){
   
 } #end dynamicction
 
-addAlgorithm(reg, id = "sampledboosting", fun = sampledboosting.wrapper())
+addAlgorithm(reg, id = "sampledboosting", fun = sampledboosting.wrapper(sampleRatio = c(0.1, 0.5), dynamic(2,4))
 
 
 
@@ -406,7 +406,7 @@ addAlgorithm(reg, id = "sampledboosting", fun = sampledboosting.wrapper())
 #pars = list(sampleRatio = c(0.1, 0.5, 0.9))
 #sampledboosting.design = makeDesign("sampledboosting", exhaustive = pars)
 
-batchMap(sampleboosting.wrapper, dynamic = c(2), sampleRatio = c(0.1))
+batchMap(sampleboosting.wrapper)
 
 
 
