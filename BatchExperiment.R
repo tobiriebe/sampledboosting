@@ -9,7 +9,7 @@ library(caret)
 library(pROC)
 
 #name ID an file direction
-reg = makeExperimentRegistry("mytest")
+reg = makeRegistry("mytest")
 
 sampledboosting.wrapper <- function(sampleRatio,
                                     simulations,
