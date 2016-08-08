@@ -42,5 +42,5 @@ source /etc/profile
 ## we merge R output with stdout from SLURM, which gets then logged via --output option
 
 source /etc/profile.d/modules.sh
-module load R/3.2mkl
+module load R/3.3mkl
 <%= cmd %> "<%= rscript %>" /dev/stdout
