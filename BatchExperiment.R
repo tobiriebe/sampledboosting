@@ -2,27 +2,101 @@
 #library(devtools)
 #install_github("mllg/batchtools")
 library(batchtools)
-#library(BatchExperiments)
+library(BatchExperiments)
 library(ROCR)
 library(mboost)
 library(caret)
 library(pROC)
 
-
-
-setwd("/naslx/projects/ua341/di49suy")
 #name ID an file direction
 reg = makeRegistry(file.dir = "mytest")
+
+sampledboosting.wrapper <- function(sampleRatio,
+                                    simulations,
+                                    predictors,
+                                    samples=200,
+                                    infoVars=50,
+                                    SNRy=10,
+                                    SNRx=2,
+                                    kappa=5 ){
+
+  
+  #set informative filename from list of parameters
+  #fileName <- paste(as.list(environment()), collapse="_")
+  
+  #initialise variables
+  X <- array(0, c(simulations, samples, predictors))
+  Xnoise <- array(0, c(simulations, samples, predictors))
+  Y <- matrix(0, nrow=samples, ncol=simulations)
+  Ynoise <- matrix(0, nrow=samples, ncol=simulations)
+  yBin <- matrix(0, nrow=samples, ncol=simulations)
+  yBinNoise <- matrix(0, nrow=samples, ncol=simulations)
+  
+  coeffs <- as.vector(rep(0, predictors))
+  #fixed seed for reproducibility
+  set.seed(1234)
+  infoIndices <- sample(c(1:predictors), infoVars)
+  #create a set of coefficients, the same for the whole set of simulations
+  infoCoefs <- rnorm(infoVars, 1, 1)  
+  coeffs[infoIndices] <- infoCoefs
+  
+  
+  #generate dataset for each simulation
+  for (simulation in 1:simulations) {
+    #print(simulation)
+    #new seeds for reproducibility
+    set.seed(1234 + simulation*samples*4) #multiply by four because we sample four times below
+    #CHECK THIS AGAIN
+    #generate the samples
+    for (predictor in 1:predictors) {
+      #just sample from a normal distribution for each voxel
+      curDim <- rnorm(samples, 0, 1)
+      X[simulation, , predictor] <- curDim
+      
+      #also generate a noisy predictor
+      noise <- rnorm(samples)
+      #calculate the adj coefficient from variance of the predictor signal and the desired SNRx
+      noiseCoeffX <- sqrt(var(curDim)/(SNRx * var(noise)))
+      #generate the response with noise
+      Xnoise[simulation, , predictor] <- X[simulation, , predictor] + noiseCoeffX*noise
+    }
+    #generate the response (from clean predictors!)
+    Y[,simulation] <- X[simulation, ,] %*% coeffs
+    
+    #generate some noise for Y
+    noise <- rnorm(samples)
+    #calculate the adj coefficient from variance of the signal and the desired SNRy
+    #varY<-varY+var(Y[,simulation])
+    noiseCoeffY <- sqrt(var(Y[,simulation])/(SNRy * var(noise)))
+    #generate the response with noise
+    Ynoise[,simulation] <- Y[,simulation] + noiseCoeffY*noise
+    #generate two-group response (kappa regulates the steepness and largely the overlap)
+    yLogit <- 1/(1+exp(-kappa*Y[,simulation]))
+    yBin[,simulation] <- rbinom(samples,1,yLogit)
+    yLogitNoise <- 1/(1+exp(-kappa*Ynoise[,simulation]))
+    yBinNoise[,simulation] <- rbinom(samples,1,yLogitNoise)
+    
+  }
+  
+#   #save file containing continuous and binary responses, together with simulation parameters
+#   list(simulations = simulations, samples = samples,predictors = predictors,
+#        infoVars = infoVars, SNRy = SNRy, SNRx = SNRx, kappa = kappa,
+#        coeffs = coeffs, X = X, Xnoise = Xnoise, Y = Y,Ynoise = Ynoise, yBin = yBin,
+#        yBinNoise = yBinNoise)
+  
+  
+  
+  
 
 
 ################################################################################
 ####################################TREE########################################
 ################################################################################
 
-sampledboosting.wrapper <- function(file, sampleRatio ){
+
   
   
-  load(file)
+  
   #this is not implementing inner folds (CV-like), just reduction over the whole training set of the current fold 
   #also weight is not implemented
   
@@ -35,7 +109,7 @@ sampledboosting.wrapper <- function(file, sampleRatio ){
     sampleRatio <- as.numeric(args[3])  #ratio of voxels TO REMOVE
     fixedMstop <- as.numeric(args[4])   #mstop to be used when not implementing cv early stopping
     fixedNu <- args[5]                  #shrinkage coefficient for boosting
-    file <- args[6]                 #file to load
+    #dynamic <- args[6]                 #dynamic to load
     localRun <- FALSE
   } else {
     ###### local testing
@@ -44,10 +118,10 @@ sampledboosting.wrapper <- function(file, sampleRatio ){
     sampleRatio = sampleRatio #ratio of voxels to REMOVE
     fixedMstop <- 100
     fixedNu <- 0.1
-    file <- file
+    #dynamic <- dynamic
     localRun <- TRUE
   }
-  file <- load(file)
+  
   ###########file types 
   fileTypePlain <- 1
   fileTypeVols <- 2
@@ -58,14 +132,14 @@ sampledboosting.wrapper <- function(file, sampleRatio ){
   
   #############load the data file with data and parameters#############
   #score <- read.table("CYP2D6ScoreTRAINING.txt")
-  #load(file)
-  #if (grepl(pattern = "_Plain", x = file)){
+  #load(dynamic)
+  #if (grepl(pattern = "_Plain", x = dynamic)){
   # fileType <- fileTypePlain
   #} else {
   # fileType <- fileTypeVols
   #}
   n <- samples  #number of cases (samples)
-  # simulations is already called 'simulations' in the file
+  # simulations is already called 'simulations' in the dynamic
   nVariables <- predictors 
   dataX <- X # X[simulation, sample, x]
   dataXnoise <- Xnoise # Xnoise[simulation, sample, x]
@@ -284,7 +358,7 @@ sampledboosting.wrapper <- function(file, sampleRatio ){
   
   
   #make a name for the output file, using input file name and parameters passed
-  #outLabel <- paste(file,"_OUT_", nOuterFolds, "_", redSteps, "_", sampleRatio, "_", fixedMstop, "_", fixedNu, ".rda", sep = "")
+  #outLabel <- paste(dynamic,"_OUT_", nOuterFolds, "_", redSteps, "_", sampleRatio, "_", fixedMstop, "_", fixedNu, ".rda", sep = "")
   #save all variables from input file, parameters and output
   list(y = y, Ynoise = Ynoise, yBin = yBin,yBinNoise = yBinNoise, 
        originalX = originalX, originalXnoise = originalXnoise, coeffs = coeffs, 
@@ -301,7 +375,8 @@ sampledboosting.wrapper <- function(file, sampleRatio ){
   
 } #end function
 
-batchMap(fun = sampledboosting.wrapper, file = c( "500_200_1000_50_10_2_5_Plain.rda", "500_200_100_50_10_2_5_Plain.rda"), more.args = list(sampleRatio = c(0.1, 0.5)) )
+#addAlgorithm(reg, id = "sampledboosting", fun = sampledboosting.wrapper, overwrite = TRUE)
+
 
 
 
@@ -312,13 +387,6 @@ batchMap(fun = sampledboosting.wrapper, file = c( "500_200_1000_50_10_2_5_Plain.
 
 
 
+ids = batchMap(sampledboosting.wrapper, sampleRatio = c(0.1,0.5,0.9), more.args = list(simulations = 2, predictors = 100))
 
-
-
-
-# Submit the jobs to the batch system
-submitJobs(resources = list(walltime = 60L*60L*1L, memory = 1000L))
-
-getStatus()
-
-
+submitJobs(ids)
