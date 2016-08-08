@@ -389,4 +389,4 @@ sampledboosting.wrapper <- function(sampleRatio,
 
 ids = batchMap(sampledboosting.wrapper, sampleRatio = c(0.1,0.5,0.9), more.args = list(simulations = 2, predictors = 100))
 
-submitJobs(ids)
+submitJobs(ids = ids)
