@@ -426,23 +426,8 @@ addExperiments(reg, prob.designs = mytest.design,
 summarizeExperiments(reg)
 
 # Submit the jobs to the batch system
-submitJobs(reg)
-
-
-# Calculate the misclassification rate for all (already done) jobs.
-reduce = function(job, res) {
-  n = length(residuals)
-  list(mcr = abs((sum(res)/n)))
-}
-res = reduceResultsExperiments(reg, fun = reduce)
-print(res)
+submitJobs(reg, resources = list(walltime = 60L*60L*1L, memory = 1000L))
 
 
 
-
-
-library(plyr)
-vars = setdiff(names(res), c("repl", "mcr"))
-aggr = ddply(res, vars, summarise, mean.mcr = mean(mcr))
-print(aggr)
 
