@@ -11,7 +11,7 @@ library(pROC)
 loadConfig()
 getConfig()
 #name ID an file direction
-reg = makeExperimentRegistry(id = "mytest")
+reg = makeExperimentRegistry(id = "mytest", packages = "caret")
  
 data <- function(simulations,
                 samples=200,
