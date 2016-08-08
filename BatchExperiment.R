@@ -301,7 +301,7 @@ sampledboosting.wrapper <- function(file, sampleRatio ){
   
 } #end function
 
-batchMap(fun = sampledboosting.wrapper, file = c( "1000_200_1000_50_10_2_5_Plain.rda", "1000_200_100_50_10_2_5_Plain.rda"), more.args = list(sampleRatio = c(0.1, 0.5)) )
+batchMap(fun = sampledboosting.wrapper, file = c( "500_200_1000_50_10_2_5_Plain.rda", "500_200_100_50_10_2_5_Plain.rda"), more.args = list(sampleRatio = c(0.1, 0.5)) )
 
 
 
