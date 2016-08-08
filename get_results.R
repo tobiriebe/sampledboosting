@@ -3,7 +3,7 @@ library(BatchExperiments)
 library(dplyr)
 
 #
-reg = loadRegistry("bmrserial-files")
+reg = loadRegistry("mytest-files")
 showStatus(reg)
 
 #
