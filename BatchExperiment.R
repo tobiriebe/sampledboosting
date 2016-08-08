@@ -2,15 +2,15 @@
 #library(devtools)
 #install_github("mllg/batchtools")
 library(batchtools)
-library(BatchJobs)
+#library(BatchJobs)
 #library(BatchExperiments)
 library(ROCR)
 library(mboost)
 library(caret)
 library(pROC)
 
-loadConfig()
-getConfig()
+#loadConfig()
+#getConfig()
 #name ID an file direction
 reg = makeRegistry("mytest")
 
