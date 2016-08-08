@@ -317,7 +317,7 @@ batchMap(fun = sampledboosting.wrapper, file = c( "1000_200_1000_50_10_2_5_Plain
 
 
 # Submit the jobs to the batch system
-submitJobs(reg, resources = list(walltime = 60L*60L*1L, memory = 1000L))
+submitJobs(resources = list(walltime = 60L*60L*1L, memory = 1000L))
 
 getStatus()
 
