@@ -8,6 +8,8 @@ library(mboost)
 library(caret)
 library(pROC)
 
+loadConfig()
+getConfig()
 #name ID an file direction
 reg = makeExperimentRegistry(id = "mytest")
  
