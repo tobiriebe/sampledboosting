@@ -1,7 +1,7 @@
 #install.packages("devtools")
-library(devtools)
+#library(devtools)
 #install_github("mllg/batchtools")
-library(batchtools)
+#library(batchtools)
 library(BatchExperiments)
 library(ROCR)
 library(mboost)
@@ -9,91 +9,89 @@ library(caret)
 library(pROC)
 
 #name ID an file direction
-reg = makeExperimentRegistry(file.dir = "registry")
-
-fun <- function(jobs,
-                 data,
-                 simulations,
-                 samples=200,
-                 predictors=1000,
-                 infoVars=50,
-                 SNRy=10,
-                 SNRx=2,
-                 kappa=5){
-  
-  #set informative filename from list of parameters
-  #fileName <- paste(as.list(environment()), collapse="_")
-  
-  #initialise variables
-  X <- array(0, c(simulations, samples, predictors))
-  Xnoise <- array(0, c(simulations, samples, predictors))
-  Y <- matrix(0, nrow=samples, ncol=simulations)
-  Ynoise <- matrix(0, nrow=samples, ncol=simulations)
-  yBin <- matrix(0, nrow=samples, ncol=simulations)
-  yBinNoise <- matrix(0, nrow=samples, ncol=simulations)
-  
-  coeffs <- as.vector(rep(0, predictors))
-  #fixed seed for reproducibility
-  set.seed(1234)
-  infoIndices <- sample(c(1:predictors), infoVars)
-  #create a set of coefficients, the same for the whole set of simulations
-  infoCoefs <- rnorm(infoVars, 1, 1)  
-  coeffs[infoIndices] <- infoCoefs
-  
-  
-  #generate dataset for each simulation
-  for (simulation in 1:simulations) {
-    #print(simulation)
-    #new seeds for reproducibility
-    set.seed(1234 + simulation*samples*4) #multiply by four because we sample four times below
-    #CHECK THIS AGAIN
-    #generate the samples
-    for (predictor in 1:predictors) {
-      #just sample from a normal distribution for each voxel
-      curDim <- rnorm(samples, 0, 1)
-      X[simulation, , predictor] <- curDim
+reg = makeExperimentRegistry(id = "mytest")
+ 
+data <- function(simulations,
+                samples=200,
+                predictors,
+                infoVars=50,
+                SNRy=10,
+                SNRx=2,
+                kappa=5){
+    
+    #set informative filename from list of parameters
+    #fileName <- paste(as.list(environment()), collapse="_")
+    
+    #initialise variables
+    X <- array(0, c(simulations, samples, predictors))
+    Xnoise <- array(0, c(simulations, samples, predictors))
+    Y <- matrix(0, nrow=samples, ncol=simulations)
+    Ynoise <- matrix(0, nrow=samples, ncol=simulations)
+    yBin <- matrix(0, nrow=samples, ncol=simulations)
+    yBinNoise <- matrix(0, nrow=samples, ncol=simulations)
+    
+    coeffs <- as.vector(rep(0, predictors))
+    #fixed seed for reproducibility
+    set.seed(1234)
+    infoIndices <- sample(c(1:predictors), infoVars)
+    #create a set of coefficients, the same for the whole set of simulations
+    infoCoefs <- rnorm(infoVars, 1, 1)  
+    coeffs[infoIndices] <- infoCoefs
+    
+    
+    #generate dataset for each simulation
+    for (simulation in 1:simulations) {
+      #print(simulation)
+      #new seeds for reproducibility
+      set.seed(1234 + simulation*samples*4) #multiply by four because we sample four times below
+      #CHECK THIS AGAIN
+      #generate the samples
+      for (predictor in 1:predictors) {
+        #just sample from a normal distribution for each voxel
+        curDim <- rnorm(samples, 0, 1)
+        X[simulation, , predictor] <- curDim
+        
+        #also generate a noisy predictor
+        noise <- rnorm(samples)
+        #calculate the adj coefficient from variance of the predictor signal and the desired SNRx
+        noiseCoeffX <- sqrt(var(curDim)/(SNRx * var(noise)))
+        #generate the response with noise
+        Xnoise[simulation, , predictor] <- X[simulation, , predictor] + noiseCoeffX*noise
+      }
+      #generate the response (from clean predictors!)
+      Y[,simulation] <- X[simulation, ,] %*% coeffs
       
-      #also generate a noisy predictor
+      #generate some noise for Y
       noise <- rnorm(samples)
-      #calculate the adj coefficient from variance of the predictor signal and the desired SNRx
-      noiseCoeffX <- sqrt(var(curDim)/(SNRx * var(noise)))
+      #calculate the adj coefficient from variance of the signal and the desired SNRy
+      #varY<-varY+var(Y[,simulation])
+      noiseCoeffY <- sqrt(var(Y[,simulation])/(SNRy * var(noise)))
       #generate the response with noise
-      Xnoise[simulation, , predictor] <- X[simulation, , predictor] + noiseCoeffX*noise
+      Ynoise[,simulation] <- Y[,simulation] + noiseCoeffY*noise
+      #generate two-group response (kappa regulates the steepness and largely the overlap)
+      yLogit <- 1/(1+exp(-kappa*Y[,simulation]))
+      yBin[,simulation] <- rbinom(samples,1,yLogit)
+      yLogitNoise <- 1/(1+exp(-kappa*Ynoise[,simulation]))
+      yBinNoise[,simulation] <- rbinom(samples,1,yLogitNoise)
+      
     }
-    #generate the response (from clean predictors!)
-    Y[,simulation] <- X[simulation, ,] %*% coeffs
     
-    #generate some noise for Y
-    noise <- rnorm(samples)
-    #calculate the adj coefficient from variance of the signal and the desired SNRy
-    #varY<-varY+var(Y[,simulation])
-    noiseCoeffY <- sqrt(var(Y[,simulation])/(SNRy * var(noise)))
-    #generate the response with noise
-    Ynoise[,simulation] <- Y[,simulation] + noiseCoeffY*noise
-    #generate two-group response (kappa regulates the steepness and largely the overlap)
-    yLogit <- 1/(1+exp(-kappa*Y[,simulation]))
-    yBin[,simulation] <- rbinom(samples,1,yLogit)
-    yLogitNoise <- 1/(1+exp(-kappa*Ynoise[,simulation]))
-    yBinNoise[,simulation] <- rbinom(samples,1,yLogitNoise)
+    #save file containing continuous and binary responses, together with simulation parameters
+         list(simulations = simulations, samples = samples,predictors = predictors,
+              infoVars = infoVars, SNRy = SNRy, SNRx = SNRx, kappa = kappa,
+              coeffs = coeffs, X = X, Xnoise = Xnoise, Y = Y,Ynoise = Ynoise, yBin = yBin,
+              yBinNoise = yBinNoise)
+        
+        
     
+       
   }
   
-  #save file containing continuous and binary responses, together with simulation parameters
-  list(simulations = simulations, samples = samples,predictors = predictors,
-       infoVars = infoVars, SNRy = SNRy, SNRx = SNRx, kappa = kappa,
-       coeffs = coeffs, X = X, Xnoise = Xnoise, Y = Y,Ynoise = Ynoise, yBin = yBin,
-       yBinNoise = yBinNoise)
   
   
   
-  
-}
-
-
-
-
 #Add the problem
-addProblem("mytest", reg = reg, fun = fun)
+addProblem(reg, id = "mytest", dynamic = data, seed = 123, overwrite = TRUE)
 
 ################################################################################
 ####################################TREE########################################
@@ -140,9 +138,9 @@ sampledboosting.wrapper <- function(dynamic, sampleRatio ){
   #score <- read.table("CYP2D6ScoreTRAINING.txt")
   #load(dynamic)
   #if (grepl(pattern = "_Plain", x = dynamic)){
-  # fileType <- fileTypePlain
+   # fileType <- fileTypePlain
   #} else {
-  # fileType <- fileTypeVols
+   # fileType <- fileTypeVols
   #}
   n <- dynamic$samples  #number of cases (samples)
   # simulations is already called 'simulations' in the dynamic
@@ -379,9 +377,9 @@ sampledboosting.wrapper <- function(dynamic, sampleRatio ){
        predictionVectorClassNoise = predictionVectorClassNoise)
   
   
-} #end dynamicction
+} #end function
 
-addAlgorithm("sampledboosting", fun = sampledboosting.wrapper, reg = reg)
+addAlgorithm(reg, id = "sampledboosting", fun = sampledboosting.wrapper, overwrite = TRUE)
 
 
 
@@ -401,14 +399,13 @@ addAlgorithm("sampledboosting", fun = sampledboosting.wrapper, reg = reg)
 
 
 # Define problem parameters:
-prob.design = list(simulations = c(2, 4), predictors = c(100, 1000))
-#mytest.design = makeDesign("mytest", exhaustive = pars)
+pars = list(simulations = c(2, 4), predictors = c(100, 1000))
+mytest.design = makeDesign("mytest", exhaustive = pars)
 
 # Define sampledboosting parameters:
-algo.design = list(sampleRatio = c(0.1, 0.5, 0.9))
-#sampledboosting.design = makeDesign("sampledboosting", exhaustive = pars)
-addExperiments(prob.design, algo.design, reg = reg)
-#batchMap(sampledboosting.wrapper, sampleRatio = c(0.1, 0.5), more.args = list(data(2)), reg = reg)
+pars = list(sampleRatio = c(0.1, 0.5, 0.9))
+sampledboosting.design = makeDesign("sampledboosting", exhaustive = pars)
+
 
 
 
@@ -416,17 +413,34 @@ addExperiments(prob.design, algo.design, reg = reg)
 
 # Add experiments to the registry:
 # Use  previously defined experimental designs.
-#addExperiments(reg, prob.designs = mytest.design,
-#              algo.designs = sampledboosting.design,
-#             repls = 2) # usually you would set repls to 100 or more.
+addExperiments(reg, prob.designs = mytest.design,
+               algo.designs = sampledboosting.design,
+               repls = 2) # usually you would set repls to 100 or more.
 
 
 
-summarizeExperiments(reg = reg)
+
 # Optional: Short summary over problems and algorithms.
-#getJobTable(reg)
+summarizeExperiments(reg)
 
 # Submit the jobs to the batch system
-#submitJobs(reg)
+submitJobs(reg)
 
+
+# Calculate the misclassification rate for all (already done) jobs.
+reduce = function(job, res) {
+  n = length(residuals)
+  list(mcr = abs((sum(res)/n)))
+}
+res = reduceResultsExperiments(reg, fun = reduce)
+print(res)
+
+
+
+
+
+library(plyr)
+vars = setdiff(names(res), c("repl", "mcr"))
+aggr = ddply(res, vars, summarise, mean.mcr = mean(mcr))
+print(aggr)
 
