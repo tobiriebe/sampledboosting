@@ -2,8 +2,6 @@
 #library(devtools)
 #install_github("mllg/batchtools")
 #library(batchtools)
-library(devtools)
-install_github("cran/caret")
 library(BatchExperiments)
 library(ROCR)
 library(mboost)
