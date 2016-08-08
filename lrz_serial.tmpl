@@ -29,7 +29,7 @@ cmd = "R CMD BATCH --no-save --no-restore"
 #SBATCH --get-user-env
 #SBATCH --export=NONE
 #SBATCH --mail-type=FAIL
-#SBATCH --mail-user=myemail@gmail.com
+#SBATCH --mail-user=tobi-riebe@hotmail.de
 
 ## resources
 ## SLURM wants minutes
@@ -42,5 +42,5 @@ source /etc/profile
 ## we merge R output with stdout from SLURM, which gets then logged via --output option
 
 source /etc/profile.d/modules.sh
-module load R/3.2mkl
+module load R/3.3mkl
 <%= cmd %> "<%= rscript %>" /dev/stdout
