@@ -9,7 +9,7 @@ library(mboost)
 library(caret)
 library(pROC)
 
-makeClusterFunctionsSlurm(template = "slurm_lmulrz.tmpl", clusters = serial)
+makeClusterFunctionsSlurm(template = "slurm_lmulrz.tmpl")
 
 #loadConfig()
 #getConfig()
