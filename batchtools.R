@@ -1,3 +1,4 @@
+makeClusterFunctionsSlurm(template = "slurm_lmulrz.tmpl", clusters = serial)
 #install.packages("devtools")
 #library(devtools)
 #install_github("mllg/batchtools")
